@@ -1,0 +1,9 @@
+[data-testid="stSidebar"] {
+    background-color: aliceblue;
+}
+
+.st-key-analyze_btn button {
+    background-color: #1976d2 !important;
+    color: white !important;
+    border-color: #1976d2 !important;
+}

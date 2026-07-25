@@ -1,0 +1,23 @@
+# 1. Streamlit & Security (CRITICAL)
+.streamlit/secrets.toml
+.env
+*.pem
+*.key
+
+# 2. Python Environments & Cache
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# 3. PyCharm & IDE settings
+.idea/
+*.iml
+.vscode/
+
+# 4. OS Generated Files
+.DS_Store
+Thumbs.db

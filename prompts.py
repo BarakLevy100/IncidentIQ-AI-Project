@@ -78,3 +78,22 @@ def get_auditor_prompt(initial_analysis: str, logs: str) -> str:
     """
 
     return textwrap.dedent(prompt).strip()
+
+
+def get_postmortem_prompt(incident_data: str) -> str:
+    """Generates a blameless Post Incident Report prompt."""
+    prompt = f"""
+    You are a Lead Reliability Engineer writing a formal, blameless Post-Incident Report (PIR).
+    Based on the provided incident raw data, generate a structured postmortem in Markdown format.
+
+    Include these exact Markdown headings (use '##'):
+    ## 1. Executive Summary & Impact
+    ## 2. Incident Timeline
+    ## 3. Root Cause Analysis (5 Whys)
+    ## 4. Lessons Learned & Action Items
+
+    Raw Incident Details:
+    {incident_data}
+    """
+
+    return textwrap.dedent(prompt).strip()

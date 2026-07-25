@@ -20,3 +20,14 @@ def run_incident_analysis(model_name: str, prompt_style: str, logs_input: str):
     audit_critique = response_auditor.text
 
     return initial_analysis, audit_critique
+
+
+def generate_postmortem(model_name: str, incident_data: str) -> str:
+    """Generates a structured postmortem report using the postmortem prompt function."""
+    try:
+        model = genai.GenerativeModel(model_name)
+        postmortem_prompt = get_postmortem_prompt(incident_data)
+        response = model.generate_content(postmortem_prompt)
+        return response.text
+    except Exception as e:
+        return f"Error generating postmortem: {str(e)}"

@@ -1,6 +1,7 @@
 import json
 import streamlit as st
 from ai_service import configure_gemini, run_incident_analysis, generate_postmortem
+from pdf_creator import create_pdf
 
 
 def initialize_app():
@@ -26,7 +27,7 @@ def render_sidebar():
     st.sidebar.header("AI Evaluation Controls")
     selected_model_name = st.sidebar.selectbox(
         "Choose AI Model:",
-        ["gemini-3.5-flash", "gemini-3.1-pro", "gemini-3.5-flash-lite"]
+        ["gemini-3.5-flash", "gemini-3.5-flash-lite", "gemini-3.1-pro"]
     )
 
     prompt_style = st.sidebar.selectbox(
@@ -37,7 +38,19 @@ def render_sidebar():
     st.sidebar.markdown("---")
     st.sidebar.header("Output Settings")
 
-    return selected_model_name, prompt_style
+    # target_audience = st.sidebar.selectbox(
+    #    "Target Audience:",
+    #    ["Engineering", "Management", "Support Team"]
+    # )
+
+    response_length = st.sidebar.radio(
+        "Analyze Response Length:",
+        options=["Short", "Normal", "Long"],
+        index=1,
+        horizontal=True
+    )
+
+    return selected_model_name, prompt_style, response_length
 
 
 def render_main_ui(default_logs):
@@ -75,6 +88,39 @@ def display_results():
                 st.markdown(st.session_state["postmortem_result"])
 
 
+def render_export_sidebar():
+    """Check for results and render the PDF export button in the sidebar."""
+    st.sidebar.markdown("---")
+    st.sidebar.header("Export Options")
+
+    has_data = any(key in st.session_state for key in ["initial_analysis", "audit_critique", "postmortem_result"])
+
+    if has_data:
+        dossier_parts = []
+
+        if "postmortem_result" in st.session_state:
+            dossier_parts.append(f"## Formal Postmortem\n{st.session_state['postmortem_result']}")
+
+        if "initial_analysis" in st.session_state:
+            dossier_parts.append(f"## AI Investigation Report\n{st.session_state['initial_analysis']}")
+
+        if "audit_critique" in st.session_state:
+            dossier_parts.append(f"## Skeptical Audit & Biases\n{st.session_state['audit_critique']}")
+
+        full_dossier = "\n\n---\n\n".join(dossier_parts)
+        pdf_bytes = create_pdf(full_dossier.strip())
+
+        st.sidebar.download_button(
+            label="📄 Download Current Report (PDF)",
+            data=pdf_bytes,
+            file_name="IncidentIQ_Report.pdf",
+            mime="application/pdf",
+            use_container_width=True
+        )
+    else:
+        st.sidebar.info("Run an analysis or generate a postmortem to enable PDF export.")
+
+
 def main():
     """Main execution function coordinating the Streamlit app flow."""
     # 1. Setup API & Defaults
@@ -82,7 +128,7 @@ def main():
     default_logs = initialize_app()
 
     # 2. Render UI Components
-    selected_model, prompt_style = render_sidebar()
+    selected_model, prompt_style, response_length = render_sidebar()
     logs_input, analyze_btn, postmortem_btn = render_main_ui(default_logs)
 
     # 3. Handle Actions
@@ -90,7 +136,7 @@ def main():
         if logs_input.strip():
             with st.spinner(f"AI {selected_model} is analyzing the data..."):
                 initial_analysis, audit_critique = run_incident_analysis(
-                    selected_model, prompt_style, logs_input
+                    selected_model, prompt_style, logs_input, response_length
                 )
                 st.session_state["initial_analysis"] = initial_analysis
                 st.session_state["audit_critique"] = audit_critique
@@ -107,8 +153,9 @@ def main():
         else:
             st.warning("Please paste logs before generating a postmortem.")
 
-    # 4. Display Results
+    # 4. Display Results and Export Options
     display_results()
+    render_export_sidebar()
 
 
 if __name__ == "__main__":

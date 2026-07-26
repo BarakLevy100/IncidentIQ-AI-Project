@@ -13,14 +13,16 @@ def get_the_length_prompt(length: str):
 
     return prompt
 
-def get_investigator_prompt(style: str, logs: str) -> str:
+def get_investigator_prompt(style: str, logs: str, length: str) -> str:
     """Generates the primary SRE analysis prompt based on selected behavior style."""
     normalized_style = style.strip().lower()
 
+    # The regular mode
     if "standard" in normalized_style:
         prompt = f"""
-        You are a Lead Site Reliability Engineer. 
-        Analyze the following logs and provide your response using these exact 4 numbered headings:
+        You are a Lead Site Reliability Engineer.
+        
+        Analyze the following logs and provide your response using these exact 4 numbered markdown headings (use '##'):
         1. Timeline of events
         2. Facts vs. Assumptions
         3. Top Root-Cause Hypotheses (ranked by confidence)
@@ -30,13 +32,13 @@ def get_investigator_prompt(style: str, logs: str) -> str:
         {logs}
         """
     else:
-        # Default to Conservative mode
+        # The conservative mode
         prompt = f"""
         You are a highly conservative Site Reliability Engineer. 
         Analyze the following incident data. DO NOT make assumptions beyond explicit log entries. 
         If a fact is missing, explicitly state 'Unknown based on logs'.
 
-        Provide your response using these exact 4 numbered headings:
+        Provide your response using these exact 4 numbered markdown headings (use '##')::
         1. Timeline of events
         2. Facts vs. Assumptions
         3. Top Root-Cause Hypotheses (ranked by confidence)
@@ -54,10 +56,12 @@ def get_investigator_prompt(style: str, logs: str) -> str:
     # else:
     #    prompt += "\nAudience: Support Team. Provide clear, actionable steps and straightforward explanations that a Tier-1 or Tier-2 support agent can follow."
 
+    prompt += get_the_length_prompt(length)
+
     return textwrap.dedent(prompt).strip()
 
 
-def get_auditor_prompt(initial_analysis: str, logs: str) -> str:
+def get_auditor_prompt(initial_analysis: str, logs: str, length: str) -> str:
     """Generates the skeptical auditor prompt to critique primary analysis."""
     prompt = f"""
     You are an objective AI system auditor reviewing an AI-generated incident diagnosis. 
@@ -76,6 +80,8 @@ def get_auditor_prompt(initial_analysis: str, logs: str) -> str:
     3. Point out any Confirmation Bias or Automation Bias in the reasoning.
     4. What critical questions did the initial analysis fail to ask?
     """
+
+    prompt += get_the_length_prompt(length)
 
     return textwrap.dedent(prompt).strip()
 

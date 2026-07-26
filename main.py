@@ -2,6 +2,7 @@ import json
 import streamlit as st
 from ai_service import configure_gemini, run_incident_analysis, generate_postmortem
 from pdf_creator import create_pdf
+from file_handler import extract_text_from_file
 
 
 def initialize_app():
@@ -58,7 +59,15 @@ def render_main_ui(default_logs):
     st.title("IncidentIQ — AI Incident Response Tool")
     st.write("An AI-powered system for incident analysis, cognitive bias detection, and postmortem generation.")
 
-    logs_input = st.text_area("Paste system logs here:", value=default_logs, height=200)
+    # 1. The file uploader
+    uploaded_file = st.file_uploader("Upload Incident Logs", type=["txt", "json", "log", "csv"])
+
+    # 2. Take the text for the file or if there isn't a file then from the text box
+    if uploaded_file:
+        logs_input = extract_text_from_file(uploaded_file)
+        st.success("File successfully loaded!")
+    else:
+        logs_input = st.text_area("Or paste raw incident logs here:", value=default_logs, height=200)
 
     col1, col2 = st.columns([1, 1])
     with col1:

@@ -1,13 +1,13 @@
 import textwrap
 
 def get_the_length_prompt(length: str):
-    """Return the Length"""
+    """Return the Length constraint formatted for any AI persona."""
     prompt = ""
 
     if "Short" in length:
         prompt += "\nLength Constraint: Keep the response extremely concise. Use bullet points and focus only on the absolute most critical information."
     elif "Long" in length:
-        prompt += "\nLength Constraint: Be exhaustive and highly detailed. Expand on your reasoning for every hypothesis and provide comprehensive debugging paths."
+        prompt += "\nLength Constraint: Be exhaustive and highly detailed. Expand on your reasoning for every point and provide a deeply comprehensive analysis."
     else:
         prompt += "\nLength Constraint: Provide a standard, balanced response."
 
@@ -25,8 +25,9 @@ def get_investigator_prompt(style: str, logs: str, length: str) -> str:
         Analyze the following logs and provide your response using these exact 4 numbered markdown headings (use '##'):
         1. Timeline of events
         2. Facts vs. Assumptions
-        3. Top Root-Cause Hypotheses (ranked by confidence)
-        4. Recommended Debugging Actions
+        3. Evidence-For vs. Evidence-Against (Format as a Markdown Table)
+        4. Top Root-Cause Hypotheses (ranked by confidence)
+        5. Recommended Debugging Actions
 
         Logs:
         {logs}
@@ -41,8 +42,9 @@ def get_investigator_prompt(style: str, logs: str, length: str) -> str:
         Provide your response using these exact 4 numbered markdown headings (use '##')::
         1. Timeline of events
         2. Facts vs. Assumptions
-        3. Top Root-Cause Hypotheses (ranked by confidence)
-        4. Recommended Debugging Actions
+        3. Evidence-For vs. Evidence-Against (Format as a Markdown Table)
+        4. Top Root-Cause Hypotheses (ranked by confidence)
+        5. Recommended Debugging Actions
 
         Logs:
         {logs}
@@ -74,7 +76,7 @@ def get_auditor_prompt(initial_analysis: str, logs: str, length: str) -> str:
     Original Logs:
     {logs}
 
-    Your Job:
+    Structure your audit report using exactly these 4 Markdown headings (use '##'):
     1. Identify unsupported claims, ungrounded speculation, or hallucinations in the initial analysis.
     2. Highlight any Post Hoc Fallacy (e.g., assuming a deployment caused the failure solely because it preceded the incident).
     3. Point out any Confirmation Bias or Automation Bias in the reasoning.

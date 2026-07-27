@@ -14,13 +14,12 @@ def initialize_app():
     except FileNotFoundError:
         pass  # Fallback gracefully if style.css isn't created yet
 
-    # 2. Load default logs from JSON
+    # 2. Load ALL logs from the JSON file
     try:
         with open("scenario_logs.json", "r") as f:
-            data = json.load(f)
-            return data.get("default_logs", "")
+            return json.load(f)
     except FileNotFoundError:
-        return ""
+        return {}
 
 
 def render_sidebar():
@@ -54,7 +53,7 @@ def render_sidebar():
     return selected_model_name, prompt_style, response_length
 
 
-def render_main_ui(default_logs):
+def render_main_ui(example_logs_dict):
     """Render the main input area and buttons, returning the log text and button clicks."""
     st.title("IncidentIQ — AI Incident Response Tool")
     st.write("An AI-powered system for incident analysis, cognitive bias detection, and postmortem generation.")
@@ -62,12 +61,24 @@ def render_main_ui(default_logs):
     # 1. The file uploader
     uploaded_file = st.file_uploader("Upload Incident Logs", type=["txt", "json", "log", "csv"])
 
-    # 2. Take the text for the file or if there isn't a file then from the text box
+    # 2. The example dropdown menu
+    # Add a default instruction at the top of the list
+    example_keys = ["Select an example..."] + list(example_logs_dict.keys())
+    selected_example = st.selectbox("Or test with a sample incident:", example_keys)
+
+    logs_input = ""
+
+    # 3. Determine which data to use (Priority: File > Dropdown > Text Area)
     if uploaded_file:
         logs_input = extract_text_from_file(uploaded_file)
         st.success("File successfully loaded!")
+    elif selected_example != "Select an example..." and selected_example in example_logs_dict:
+        logs_input = example_logs_dict[selected_example]
+        st.info(f"Loaded sample dataset: {selected_example}")
+        with st.expander("View Sample Logs"):
+            st.code(logs_input, language="text")
     else:
-        logs_input = st.text_area("Or paste raw incident logs here:", value=default_logs, height=200)
+        logs_input = st.text_area("Or paste raw incident logs here:", height=200)
 
     col1, col2 = st.columns([1, 1])
     with col1:
@@ -132,15 +143,17 @@ def render_export_sidebar():
 
 def main():
     """Main execution function coordinating the Streamlit app flow."""
-    # 1. Setup API & Defaults
+    # 1. Setup API
     configure_gemini(st.secrets["GEMINI_API_KEY"])
-    default_logs = initialize_app()
 
-    # 2. Render UI Components
+    # 2. Gets all the logs from the JSON file
+    example_logs_dict = initialize_app()
+
+    # 3. Render UI Components
     selected_model, prompt_style, response_length = render_sidebar()
-    logs_input, analyze_btn, postmortem_btn = render_main_ui(default_logs)
+    logs_input, analyze_btn, postmortem_btn = render_main_ui(example_logs_dict)
 
-    # 3. Handle Actions
+    # 4. Handle Actions
     if analyze_btn:
         if logs_input.strip():
             with st.spinner(f"AI {selected_model} is analyzing the data..."):

@@ -32,7 +32,7 @@ def render_sidebar():
 
     prompt_style = st.sidebar.selectbox(
         "Prompt Variation:",
-        ["Standard SRE Analysis", "Strictly Conservative (Low Hallucination)"]
+        ["Standard Analysis", "Strictly Conservative (Low Hallucination)"]
     )
 
     st.sidebar.markdown("---")
@@ -141,6 +141,17 @@ def render_export_sidebar():
         st.sidebar.info("Run an analysis or generate a postmortem to enable PDF export.")
 
 
+def check_and_clear_state_for_new_logs(current_logs):
+    """Clear the data of the analysis, audit and postmortem only if the user is giving different logs that he wants
+    to generate with them a new analysis and audit or a postmortem.
+    We are doing it in order to not mix one incident analysis with a different incident postmortem."""
+    if st.session_state.get("last_processed_logs") != current_logs:
+        st.session_state.pop("initial_analysis", None)
+        st.session_state.pop("audit_critique", None)
+        st.session_state.pop("postmortem_result", None)
+        st.session_state["last_processed_logs"] = current_logs
+
+
 def main():
     """Main execution function coordinating the Streamlit app flow."""
     # 1. Setup API
@@ -156,6 +167,8 @@ def main():
     # 4. Handle Actions
     if analyze_btn:
         if logs_input.strip():
+            check_and_clear_state_for_new_logs(logs_input)
+
             with st.spinner(f"AI {selected_model} is analyzing the data..."):
                 initial_analysis, audit_critique = run_incident_analysis(
                     selected_model, prompt_style, logs_input, response_length
@@ -168,6 +181,10 @@ def main():
 
     if postmortem_btn:
         if logs_input.strip():
+            # Clear the data of the analysis only if the logs have changed in order to not
+            # mix one incident analysis with a different incident postmortem.
+            check_and_clear_state_for_new_logs(logs_input)
+
             with st.spinner(f"Generating postmortem via {selected_model}..."):
                 postmortem_md = generate_postmortem(selected_model, logs_input)
                 st.session_state["postmortem_result"] = postmortem_md
@@ -175,7 +192,7 @@ def main():
         else:
             st.warning("Please paste logs before generating a postmortem.")
 
-    # 4. Display Results and Export Options
+    # 5. Display Results and Export Options
     display_results()
     render_export_sidebar()
 

@@ -43,11 +43,21 @@ def sanitize_for_latin1(text: str) -> str:
     return text.encode('latin-1', 'replace').decode('latin-1')
 
 
-def create_pdf(report_md: str) -> bytes:
+def create_pdf(report_md: str, model_name: str = "Unknown", prompt_style: str = "Standard",
+               target_audience: str = "Engineering", response_length: str = "Normal") -> bytes:
     """Parses AI markdown text and converts it into a formatted PDF byte stream."""
     pdf = PostmortemPDF()
     pdf.add_page()
     pdf.set_auto_page_break(auto=True, margin=15)
+
+    # The AI and settings that were used to generate the analysis
+    pdf.set_font("Helvetica", "B", 10)
+    pdf.set_fill_color(240, 240, 240)  # Light grey background
+    pdf.cell(0, 6, " Execution Metadata & Configuration", border=1, ln=1, fill=True)
+    pdf.set_font("Helvetica", "", 9)
+    pdf.cell(0, 6, f"  Model: {model_name}   |   Mode: {prompt_style}", border="LR", ln=1, fill=True)
+    pdf.cell(0, 6, f"  Audience: {target_audience}   |   Analysis Response Length: {response_length}", border="LRB", ln=1, fill=True)
+    pdf.ln(5)
 
     lines = report_md.split("\n")
 

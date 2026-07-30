@@ -6,11 +6,11 @@ def configure_gemini(api_key: str):
     genai.configure(api_key=api_key)
 
 
-def run_incident_analysis(model_name: str, prompt_style: str, logs_input: str, length: str):
+def run_incident_analysis(model_name: str, prompt_style: str, logs_input: str, length: str, target_audience: str):
     model = genai.GenerativeModel(model_name)
 
     # 1. Primary Analysis
-    inv_prompt = get_investigator_prompt(prompt_style, logs_input, length)
+    inv_prompt = get_investigator_prompt(prompt_style, logs_input, length, target_audience)
     response_investigator = model.generate_content(inv_prompt)
     initial_analysis = response_investigator.text
 

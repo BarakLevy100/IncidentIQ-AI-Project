@@ -30,18 +30,19 @@ def render_sidebar():
         ["gemini-3.5-flash", "gemini-3.5-flash-lite", "gemini-3.1-pro"]
     )
 
+    st.sidebar.markdown("---")
+    st.sidebar.header("Analysis Settings")
+
     prompt_style = st.sidebar.selectbox(
         "Prompt Variation:",
-        ["Standard Analysis", "Strictly Conservative (Low Hallucination)"]
+        ["Standard Analysis", "Strictly Conservative (Low Hallucination)"],
+        help="Conservative mode restricts the AI to strict, verifiable data from the logs only."
     )
 
-    st.sidebar.markdown("---")
-    st.sidebar.header("Output Settings")
-
-    # target_audience = st.sidebar.selectbox(
-    #    "Target Audience:",
-    #    ["Engineering", "Management", "Support Team"]
-    # )
+    target_audience = st.sidebar.selectbox(
+        "Target Audience:",
+        ["Engineering", "Management", "Support Team"]
+    )
 
     response_length = st.sidebar.radio(
         "Analyze Response Length:",
@@ -50,7 +51,7 @@ def render_sidebar():
         horizontal=True
     )
 
-    return selected_model_name, prompt_style, response_length
+    return selected_model_name, prompt_style, response_length, target_audience
 
 
 def render_main_ui(example_logs_dict):
@@ -108,7 +109,7 @@ def display_results():
                 st.markdown(st.session_state["postmortem_result"])
 
 
-def render_export_sidebar():
+def render_export_sidebar(model_name, prompt_style, target_audience, response_length):
     """Check for results and render the PDF export button in the sidebar."""
     st.sidebar.markdown("---")
     st.sidebar.header("Export Options")
@@ -128,7 +129,7 @@ def render_export_sidebar():
             dossier_parts.append(f"## Skeptical Audit & Biases\n{st.session_state['audit_critique']}")
 
         full_dossier = "\n\n---\n\n".join(dossier_parts)
-        pdf_bytes = create_pdf(full_dossier.strip())
+        pdf_bytes = create_pdf(full_dossier.strip(), model_name, prompt_style, target_audience, response_length)
 
         st.sidebar.download_button(
             label="📄 Download Current Report (PDF)",
@@ -161,7 +162,7 @@ def main():
     example_logs_dict = initialize_app()
 
     # 3. Render UI Components
-    selected_model, prompt_style, response_length = render_sidebar()
+    selected_model, prompt_style, response_length, target_audience = render_sidebar()
     logs_input, analyze_btn, postmortem_btn = render_main_ui(example_logs_dict)
 
     # 4. Handle Actions
@@ -171,7 +172,7 @@ def main():
 
             with st.spinner(f"AI {selected_model} is analyzing the data..."):
                 initial_analysis, audit_critique = run_incident_analysis(
-                    selected_model, prompt_style, logs_input, response_length
+                    selected_model, prompt_style, logs_input, response_length, target_audience
                 )
                 st.session_state["initial_analysis"] = initial_analysis
                 st.session_state["audit_critique"] = audit_critique
@@ -194,8 +195,7 @@ def main():
 
     # 5. Display Results and Export Options
     display_results()
-    render_export_sidebar()
-
+    render_export_sidebar(selected_model, prompt_style, target_audience, response_length)
 
 if __name__ == "__main__":
     main()

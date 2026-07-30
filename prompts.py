@@ -13,50 +13,43 @@ def get_the_length_prompt(length: str):
 
     return prompt
 
-def get_investigator_prompt(style: str, logs: str, length: str) -> str:
+
+def get_investigator_prompt(style: str, logs: str, length: str, audience: str) -> str:
     """Generates the primary SRE analysis prompt based on selected behavior style."""
     normalized_style = style.strip().lower()
 
-    # The regular mode
+    # 1. Establish the AI's Persona: Who the AI is
+        # The standard mode
     if "standard" in normalized_style:
-        prompt = f"""
-        You are a Lead Site Reliability Engineer.
-        
-        Analyze the following logs and provide your response using these exact 4 numbered markdown headings (use '##'):
-        1. Timeline of events
-        2. Facts vs. Assumptions
-        3. Evidence-For vs. Evidence-Against (Format as a Markdown Table)
-        4. Top Root-Cause Hypotheses (ranked by confidence)
-        5. Recommended Debugging Actions
-
-        Logs:
-        {logs}
-        """
+        persona = "You are a Lead Site Reliability Engineer."
     else:
         # The conservative mode
-        prompt = f"""
-        You are a highly conservative Site Reliability Engineer. 
-        Analyze the following incident data. DO NOT make assumptions beyond explicit log entries. 
-        If a fact is missing, explicitly state 'Unknown based on logs'.
+        persona = "You are a highly conservative Site Reliability Engineer. DO NOT make assumptions beyond explicit log entries. If a fact is missing, explicitly state 'Unknown based on logs'."
 
-        Provide your response using these exact 4 numbered markdown headings (use '##')::
-        1. Timeline of events
-        2. Facts vs. Assumptions
-        3. Evidence-For vs. Evidence-Against (Format as a Markdown Table)
-        4. Top Root-Cause Hypotheses (ranked by confidence)
-        5. Recommended Debugging Actions
+    # 2. Establish the Target Audience: Who the AI is talking to
+    if "Management" in audience:
+        audience_instruction = "Your target audience is Management. Focus on business impact, high-level root cause, and clear explanations. Avoid raw code or overly dense technical jargon."
+    elif "Engineering" in audience:
+        audience_instruction = "Your target audience is Engineering. Be highly technical. Include specific system architecture assumptions, code-level hypotheses, and exact terminal commands."
+    else:
+        audience_instruction = "Your target audience is the Support Team. Provide clear, actionable steps and straightforward explanations that a Tier-1 or Tier-2 support agent can follow."
 
-        Logs:
-        {logs}
-        """
+    # 3. Build the final prompt
+    prompt = f"""
+    {persona}
 
-    # 2. Audience Modifier
-    # if "Management" in audience:
-    #    prompt += "\nAudience: Management. Focus on business impact, high-level root cause, and clear explanations. Avoid raw code or overly dense technical jargon."
-    # elif "Engineering" in audience:
-    #    prompt += "\nAudience: Engineering. Be highly technical. Include specific system architecture assumptions, code-level hypotheses, and exact terminal commands."
-    # else:
-    #    prompt += "\nAudience: Support Team. Provide clear, actionable steps and straightforward explanations that a Tier-1 or Tier-2 support agent can follow."
+    {audience_instruction}
+
+    Analyze the following logs and provide your response using these exact 5 numbered markdown headings (use '##'):
+    1. Timeline of events
+    2. Facts vs. Assumptions
+    3. Evidence-For vs. Evidence-Against (Format as a Markdown Table)
+    4. Top Root-Cause Hypotheses (ranked by confidence)
+    5. Recommended Debugging Actions
+
+    Logs:
+    {logs}
+    """
 
     prompt += get_the_length_prompt(length)
 

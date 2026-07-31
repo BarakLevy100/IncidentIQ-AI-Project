@@ -3,6 +3,8 @@ import streamlit as st
 from ai_service import configure_gemini, run_incident_analysis, generate_postmortem
 from ui_components import render_sidebar, render_main_ui, display_results, render_export_sidebar
 
+API_KEY = st.secrets["GEMINI_API_KEY"] # put the api key here or create the folder .streamlit and the file secrets.toml and put there GEMINI_API_KEY = "YOUR API KEY".
+
 
 def initialize_app():
     """Load external CSS styles and default configuration data on startup."""
@@ -31,7 +33,7 @@ def check_and_clear_state_for_new_logs(current_logs):
 def main():
     """Main execution function coordinating the Streamlit app flow."""
     # 1. Setup API
-    configure_gemini(st.secrets["GEMINI_API_KEY"])
+    configure_gemini(API_KEY)
 
     # 2. Gets all the logs from the JSON file
     example_logs_dict = initialize_app()

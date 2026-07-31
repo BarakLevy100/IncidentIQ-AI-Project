@@ -7,6 +7,9 @@ def configure_gemini(api_key: str):
 
 
 def run_incident_analysis(model_name: str, prompt_style: str, logs_input: str, length: str, target_audience: str):
+    """This function executes a two-pass AI pipeline that first analyzes the incident logs, and then acts as a
+    skeptical auditor to critique its own initial findings for biases. It utilizes layered error handling
+    throughout both steps to gracefully catch API failures or Google safety blocks without crashing the application."""
     try:
         model = genai.GenerativeModel(model_name)
 

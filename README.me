@@ -1,5 +1,8 @@
 Author: Barak Levy
 
+
+# General Info
+
 IncidentIQ: AI-Powered Incident Response & Root-Cause Analysis Tool
 IncidentIQ is a professional diagnostic application designed to assist Site Reliability Engineers (SREs), DevOps teams,
 and management in investigating production incidents.
@@ -9,8 +12,8 @@ Rather than blindly trusting AI-generated answers, IncidentIQ implements a pragm
 epistemic separation (Facts vs. Assumptions) and actively audits its own conclusions for cognitive biases and logical fallacies.
 
 
-1. Core Features:
-Multi-Agent Diagnostic Pipeline:
+# 1. Core Features:
+## Multi-Agent Diagnostic Pipeline:
 The Primary Investigator: Analyzes raw logs to generate chronological timelines, separate facts from assumptions, and rank root-cause hypotheses by confidence.
 The Skeptical Auditor: An adversarial AI agent that critiques the primary analysis, explicitly hunting for logical fallacies (e.g., Post Hoc Fallacy) and cognitive biases (e.g., Automation Bias, Confirmation Bias).
 Dynamic Audience Routing: Tailors the analytical output for different stakeholders (Engineering, Management, or Support) without degrading the underlying technical reasoning.
@@ -20,7 +23,7 @@ Consolidated PDF Export: Compiles the Investigator's analysis, the Auditor's cri
 Defensive State Management: Safely handles cache invalidation when switching between different incident datasets to prevent cross-contamination of logs.
 
 
-2. Technology Stack
+# 2. Technology Stack
 Language: Python
 Frontend UI: Streamlit (Modularized into ui_components.py)
 AI Engine: Google Gemini API (gemini-3.5-flash, gemini-3.5-flash-lite, gemini-3.1-pro-preview)
@@ -28,36 +31,38 @@ Data Handling: JSON (for scenario testing), raw text parsing, upload file
 Document Generation: fpdf (Python PDF Library)
 
 
-3. Installation & Setup
+# 3. Installation & Setup
 
-Clone the repository:
+### Clone the repository:
 
 Bash
 git clone https://github.com/YOUR-USERNAME/IncidentIQ.git
 cd IncidentIQ
 
 
-Install dependencies:
+### Install dependencies:
 It is recommended to use a virtual environment.
 
 Bash
 pip install -r requirements.txt
-Configure the API Key:
-This application requires a Google Gemini API key. Create a .streamlit folder in the root directory and add a secrets.toml file:
 
+
+### Configure the API Key:
+This application requires a Google Gemini API key.
+Create a .streamlit folder in the root directory and add a secrets.toml file:
 
 Ini, TOML
 # .streamlit/secrets.toml
 GEMINI_API_KEY = "your_api_key_here"
 
 
-Run the application:
+### Run the application:
 
 Bash
 streamlit run main.py
 
 
-4. How to Use
+# 4. How to Use
 Input Data: Upload an incident log file (txt, json, log, csv), paste raw terminal output into the text area, or
 select one of the built-in simulated incident scenarios from the dropdown.
 Configure AI Settings: Use the sidebar to select your preferred Gemini model, toggle the prompt variation
@@ -69,7 +74,7 @@ Export: Once the analysis is complete, click "Download Current Report (PDF)" in 
 auditable dossier.
 
 
-5. Ethical AI Usage & Epistemic Boundaries
+# 5. Ethical AI Usage & Epistemic Boundaries
 IncidentIQ is designed as a diagnostic exoskeleton, not an autonomous decision-maker. It adheres to strict
 professional guidelines:
 Hypotheses over Claims: The tool provides probabilistic theories, never claiming absolute certainty.

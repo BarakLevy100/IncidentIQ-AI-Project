@@ -1,20 +1,17 @@
 import json
 import streamlit as st
 from ai_service import configure_gemini, run_incident_analysis, generate_postmortem
-from pdf_creator import create_pdf
-from file_handler import extract_text_from_file
+from ui_components import render_sidebar, render_main_ui, display_results, render_export_sidebar
 
 
 def initialize_app():
     """Load external CSS styles and default configuration data on startup."""
-    # 1. Load CSS
     try:
         with open("style.css") as f:
             st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
     except FileNotFoundError:
-        pass  # Fallback gracefully if style.css isn't created yet
+        pass
 
-    # 2. Load ALL logs from the JSON file
     try:
         with open("scenario_logs.json", "r") as f:
             return json.load(f)
@@ -22,130 +19,8 @@ def initialize_app():
         return {}
 
 
-def render_sidebar():
-    """Render the sidebar controls and return the selected configuration."""
-    st.sidebar.header("AI Evaluation Controls")
-    selected_model_name = st.sidebar.selectbox(
-        "Choose AI Model:",
-        ["gemini-3.5-flash", "gemini-3.5-flash-lite", "gemini-3.1-pro"]
-    )
-
-    st.sidebar.markdown("---")
-    st.sidebar.header("Analysis Settings")
-
-    prompt_style = st.sidebar.selectbox(
-        "Prompt Variation:",
-        ["Standard Analysis", "Strictly Conservative (Low Hallucination)"],
-        help="Conservative mode restricts the AI to strict, verifiable data from the logs only."
-    )
-
-    target_audience = st.sidebar.selectbox(
-        "Target Audience:",
-        ["Engineering", "Management", "Support Team"]
-    )
-
-    response_length = st.sidebar.radio(
-        "Analyze Response Length:",
-        options=["Short", "Normal", "Long"],
-        index=1,
-        horizontal=True
-    )
-
-    return selected_model_name, prompt_style, response_length, target_audience
-
-
-def render_main_ui(example_logs_dict):
-    """Render the main input area and buttons, returning the log text and button clicks."""
-    st.title("IncidentIQ — AI Incident Response Tool")
-    st.write("An AI-powered system for incident analysis, cognitive bias detection, and postmortem generation.")
-
-    # 1. The file uploader
-    uploaded_file = st.file_uploader("Upload Incident Logs", type=["txt", "json", "log", "csv"])
-
-    # 2. The example dropdown menu
-    # Add a default instruction at the top of the list
-    example_keys = ["Select an example..."] + list(example_logs_dict.keys())
-    selected_example = st.selectbox("Or test with a sample incident:", example_keys)
-
-    logs_input = ""
-
-    # 3. Determine which data to use (Priority: File > Dropdown > Text Area)
-    if uploaded_file:
-        logs_input = extract_text_from_file(uploaded_file)
-        st.success("File successfully loaded!")
-    elif selected_example != "Select an example..." and selected_example in example_logs_dict:
-        logs_input = example_logs_dict[selected_example]
-        st.info(f"Loaded sample dataset: {selected_example}")
-        with st.expander("View Sample Logs"):
-            st.code(logs_input, language="text")
-    else:
-        logs_input = st.text_area("Or paste raw incident logs here:", height=200)
-
-    col1, col2 = st.columns([1, 1])
-    with col1:
-        analyze_btn = st.button("Analyze Incident", type="primary", use_container_width=True)
-    with col2:
-        postmortem_btn = st.button("Generate Postmortem", use_container_width=True)
-
-    return logs_input, analyze_btn, postmortem_btn
-
-
-def display_results():
-    """Display the analysis and postmortem results in tabs if they exist in session state."""
-    if "initial_analysis" in st.session_state or "postmortem_result" in st.session_state:
-        st.markdown("---")
-        tab1, tab2, tab3 = st.tabs(["AI Investigation Report", "Skeptical Audit & Biases", "Postmortem"])
-
-        with tab1:
-            if "initial_analysis" in st.session_state:
-                st.markdown(st.session_state["initial_analysis"])
-
-        with tab2:
-            if "audit_critique" in st.session_state:
-                st.markdown(st.session_state["audit_critique"])
-
-        with tab3:
-            if "postmortem_result" in st.session_state:
-                st.markdown(st.session_state["postmortem_result"])
-
-
-def render_export_sidebar(model_name, prompt_style, target_audience, response_length):
-    """Check for results and render the PDF export button in the sidebar."""
-    st.sidebar.markdown("---")
-    st.sidebar.header("Export Options")
-
-    has_data = any(key in st.session_state for key in ["initial_analysis", "audit_critique", "postmortem_result"])
-
-    if has_data:
-        dossier_parts = []
-
-        if "postmortem_result" in st.session_state:
-            dossier_parts.append(f"## Formal Postmortem\n{st.session_state['postmortem_result']}")
-
-        if "initial_analysis" in st.session_state:
-            dossier_parts.append(f"## AI Investigation Report\n{st.session_state['initial_analysis']}")
-
-        if "audit_critique" in st.session_state:
-            dossier_parts.append(f"## Skeptical Audit & Biases\n{st.session_state['audit_critique']}")
-
-        full_dossier = "\n\n---\n\n".join(dossier_parts)
-        pdf_bytes = create_pdf(full_dossier.strip(), model_name, prompt_style, target_audience, response_length)
-
-        st.sidebar.download_button(
-            label="📄 Download Current Report (PDF)",
-            data=pdf_bytes,
-            file_name="IncidentIQ_Report.pdf",
-            mime="application/pdf",
-            use_container_width=True
-        )
-    else:
-        st.sidebar.info("Run an analysis or generate a postmortem to enable PDF export.")
-
-
 def check_and_clear_state_for_new_logs(current_logs):
-    """Clear the data of the analysis, audit and postmortem only if the user is giving different logs that he wants
-    to generate with them a new analysis and audit or a postmortem.
-    We are doing it in order to not mix one incident analysis with a different incident postmortem."""
+    """Clear the data of the analysis, audit and postmortem only if the user is giving different logs."""
     if st.session_state.get("last_processed_logs") != current_logs:
         st.session_state.pop("initial_analysis", None)
         st.session_state.pop("audit_critique", None)
@@ -182,8 +57,6 @@ def main():
 
     if postmortem_btn:
         if logs_input.strip():
-            # Clear the data of the analysis only if the logs have changed in order to not
-            # mix one incident analysis with a different incident postmortem.
             check_and_clear_state_for_new_logs(logs_input)
 
             with st.spinner(f"Generating postmortem via {selected_model}..."):

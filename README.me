@@ -83,3 +83,15 @@ before ingestion.
 Execution Liability: The tool recommends safe debugging steps, but the human engineer remains strictly
 responsible for the final judgment and execution of any commands.
 Demo video link and full reflective report are included in the report documents.
+
+
+# Project Architecture
+
+*   **`main.py`**: The central orchestrator and entry point for the Streamlit application.
+*   **`ui_components.py`**: Houses all frontend logic, sidebar rendering, and user interface elements.
+*   **`ai_service.py`**: Manages the API calls to Google Gemini, handling the Multi-Agent execution and safety filters.
+*   **`prompts.py`**: Contains the dynamic, f-string based prompt architectures that shift based on user settings.
+*   **`pdf_creator.py`**: Programmatically generates the downloadable, formatted PDF dossier using the `fpdf` library.
+*   **`file_handler.py`**: Securely parses and extracts text from various user-uploaded file formats (JSON, CSV, TXT, LOG).
+*   **`scenario_logs.json`**: A modular database of simulated production incidents used for testing and demonstration.
+*   **`style.css`**: Custom CSS injections to enhance the Streamlit UI.
